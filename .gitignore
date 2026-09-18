@@ -1,0 +1,14 @@
+# build outputs (the scripts under build/ are tracked)
+build/macos-arm64/
+build/linux-x64/
+build/windows-x64/
+build/lib/
+build/bdist.*/
+build/*.log
+cache/
+release/
+release_old_*/
+*.egg-info/
+__pycache__/
+*.pyc
+.DS_Store

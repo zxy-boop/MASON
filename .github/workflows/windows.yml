@@ -1,0 +1,66 @@
+name: windows-package
+on:
+  push: { branches: [main] }
+  workflow_dispatch: {}
+env:
+  VERSION: "1.0.2"
+  PBS_URL: "https://github.com/astral-sh/python-build-standalone/releases/download/20260901/cpython-3.12.14%2B20260901-x86_64-pc-windows-msvc-install_only_stripped.tar.gz"
+  OPENCODE_URL: "https://registry.npmjs.org/opencode-windows-x64/-/opencode-windows-x64-1.18.26.tgz"
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    defaults: { run: { shell: pwsh } }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble the bundle (portable CPython + wheels + opencode)
+        run: |
+          $B = "$PWD\dist\MASON-$env:VERSION-windows-x64"
+          New-Item -ItemType Directory -Force "$B\runtime" | Out-Null
+          curl.exe -sSL -o cpython.tar.gz "$env:PBS_URL"
+          tar -xzf cpython.tar.gz -C "$B\runtime"
+          $Py = "$B\runtime\python\python.exe"
+          & $Py -m pip install --quiet --upgrade pip
+          & $Py -m pip install --quiet "mcp>=1.0,<2" "pymatgen>=2024.1" "ase>=3.22" "numpy>=1.24" "scipy>=1.10"
+          & $Py -m pip install --quiet --no-deps .
+          curl.exe -sSL -o opencode.tgz "$env:OPENCODE_URL"
+          New-Item -ItemType Directory -Force oc | Out-Null
+          tar -xzf opencode.tgz -C oc
+          Copy-Item oc\package\bin\opencode.exe "$B\runtime\opencode.exe"
+          Copy-Item -Recurse launcher "$B\launcher"; Copy-Item -Recurse docs "$B\docs"; Copy-Item -Recurse examples "$B\examples"
+          New-Item -ItemType Directory -Force "$B\build\windows" | Out-Null; Copy-Item build\windows\make_exe.ps1 "$B\build\windows\"
+          Set-Content -Path "$B\MASON.bat" -Value "@echo off`r`nchcp 65001 >nul`r`nset PYTHONUTF8=1`r`nset MASON_HOME=%~dp0`r`n`"%~dp0runtime\python\python.exe`" `"%~dp0launcher\mason.py`" %*`r`npause"
+          & $Py -c "import mason_mcp, pymatgen.core, spglib, ase, numpy, scipy; print('imports ok; pymatgen', pymatgen.core.__version__)"
+      - name: Test the MCP tools over stdio (no language model needed)
+        run: |
+          $B = "$PWD\dist\MASON-$env:VERSION-windows-x64"
+          & "$B\runtime\python\python.exe" tests\smoke_mcp.py --python "$B\runtime\python\python.exe" --examples "$B\examples"
+      - name: Test the launcher (wizard, opencode server, MCP connection, viewer)
+        run: |
+          $B = "$PWD\dist\MASON-$env:VERSION-windows-x64"
+          $env:MASON_WORKSPACE = "$env:TEMP\mason-home\workspace"
+          & "$B\runtime\python\python.exe" tests\smoke_launcher.py --launcher "$B\MASON.bat" --python "$B\runtime\python\python.exe" --home "$env:TEMP\mason-home" --port 4097
+      - name: Build MASON.exe
+        run: |
+          $B = "$PWD\dist\MASON-$env:VERSION-windows-x64"
+          $Py = "$B\runtime\python\python.exe"
+          & $Py -m pip install --quiet pyinstaller
+          & $Py -m PyInstaller --onefile --noconfirm --name MASON --console --distpath "$B" --workpath "$env:TEMP\mason-build" --specpath "$env:TEMP\mason-build" launcher\mason_exe_stub.py
+          Get-ChildItem "$B\MASON.exe" | Select-Object Name, Length
+          & "$B\MASON.exe" --version
+      - name: Zip the portable bundle
+        run: |
+          Compress-Archive -Path "dist\MASON-$env:VERSION-windows-x64" -DestinationPath "dist\MASON-$env:VERSION-windows-x64.zip" -CompressionLevel Optimal
+          Get-FileHash "dist\MASON-$env:VERSION-windows-x64.zip" -Algorithm SHA256 | Format-List
+      - name: Build the installer (Inno Setup, lets the user choose the installation folder)
+        run: |
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" /DSourceDir="$PWD\dist\MASON-$env:VERSION-windows-x64" build\windows\MASON.iss
+          Get-ChildItem dist\*.exe | Select-Object Name, Length
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MASON-windows-x64
+          compression-level: 0
+          path: |
+            dist/MASON-*.zip
+            dist/MASON-*-setup.exe
+      - uses: actions/upload-artifact@v4
+        with: { name: MASON.exe, path: dist/MASON-*/MASON.exe }

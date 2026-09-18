@@ -1,0 +1,20 @@
+[project]
+name = "mason-mcp"
+version = "1.0.2"
+description = "MASON: deterministic atomistic structure-building tools over MCP"
+requires-python = ">=3.10"
+dependencies = ["mcp>=1.0,<2", "pymatgen>=2024.1", "ase>=3.22", "numpy>=1.24", "scipy>=1.10"]
+
+[project.scripts]
+mason-mcp = "mason_mcp.server:main"
+mason-viewer = "mason_mcp.server:static_main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["mason_mcp", "mason_mcp.runtime"]
+
+[tool.setuptools.package-data]
+mason_mcp = ["assets/*.js"]

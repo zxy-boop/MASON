@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>MASON · Getting started</title>
+<style>
+body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;color:#1b2326;background:#fff;margin:0}
+main{max-width:860px;margin:0 auto;padding:40px 28px 60px}
+h1{font-size:26px;margin:0 0 4px} .sub{color:#5b6668;margin:0 0 28px}
+h2{font-size:17px;margin:30px 0 10px;color:#1e6f63;border-bottom:1px solid #dfe5e3;padding-bottom:6px}
+ol,ul{padding-left:22px} li{margin:6px 0;line-height:1.55}
+code,pre{font-family:Menlo,Consolas,monospace;font-size:13px;background:#f3f5f5;border-radius:6px}
+code{padding:1px 6px} pre{padding:12px 14px;overflow-x:auto;line-height:1.5}
+.card{border:1px solid #dfe5e3;border-radius:10px;padding:14px 18px;margin:12px 0;background:#fafbfb}
+.k{display:inline-block;background:#1e6f63;color:#fff;border-radius:12px;padding:0 9px;font-size:12px;margin-right:6px}
+a{color:#1e6f63}
+</style></head><body><main>
+<h1>MASON · Getting started</h1>
+<p class="sub">Build atomistic structures for first-principles calculations in natural language. This page opens on the first launch only; it stays in the <code>docs/</code> folder of the installation.</p>
+
+<h2>Step 1 · Configure a model in the terminal</h2>
+<div class="card">
+<p>MASON has no built-in language model. On the first launch a wizard in the terminal asks which model to use, sends one test request to it and prints the answer. It then asks for an optional Materials Project key and for the folder that will hold your structures (default <code>~/Documents/MASON</code>). The configuration and the keys are kept in the per-user configuration folder (macOS <code>~/Library/Application Support/MASON</code>, Windows <code>%APPDATA%\MASON</code>, Linux <code>~/.config/MASON</code>).</p>
+<ol>
+<li><span class="k">1–6</span><b>OpenAI, Anthropic, Google, xAI, Mistral, DeepSeek</b>: API key, then a model from the list (or any model id typed by hand).</li>
+<li><span class="k">7–10</span><b>Alibaba (Qwen), Moonshot (Kimi), Zhipu (GLM), MiniMax</b>: choose the China or the international endpoint, then the key and the model.</li>
+<li><span class="k">11–12</span><b>ByteDance Volcengine (Doubao)</b> and <b>OpenRouter</b> (one key for models of many vendors).</li>
+<li><span class="k">13</span><b>Ollama</b>: run <code>ollama pull qwen3.6:27b</code> first, then enter the model name. Models of 27B parameters or more with a 64k context are recommended.</li>
+<li><span class="k">14</span>Configure later in the web interface.</li>
+</ol>
+<p>Non-thinking models (deepseek-flash, gpt-5.6, claude-sonnet-5, gemini-3.8-flash, qwen3.8-flash, glm-5.3-flash) build a structure in seconds; long-thinking models take minutes per structure.</p>
+<p>The wizard then asks for an optional <b>Materials Project API key</b> (free at <a href="https://next-materialsproject.org/api">next-materialsproject.org/api</a>). It enables the two database tools that look up known crystals online; the wizard tests it with one query. Press Enter to skip.</p>
+<p>To change the model, run <code>MASON --setup</code>. To check that the configured model answers, run <code>MASON --test</code>. To see the current configuration, run <code>MASON --config</code>.</p>
+</div>
+
+<h2>Step 2 · The workbench</h2>
+<ul>
+<li>The terminal prints the addresses and the browser opens the workbench (by default <a href="http://127.0.0.1:4096/workbench">http://127.0.0.1:4096/workbench</a>; if the port is taken, the next free one is used): the conversation on the left, the structure viewer on the right. The <b>MASON</b> agent and your model are preselected under the input box. If the page shows "Add project" instead, use the full URL printed in the terminal.</li>
+<li>Every structure the agent builds comes with a link; clicking it shows the structure in the viewer pane, where it can be rotated, zoomed and inspected atom by atom. Selection pages for interface candidates or atoms open in the same pane.</li>
+<li>All files are written to the workspace folder you chose; sample structures are in its <code>examples/</code> subfolder. Every structure the agent renders appears in the viewer pane automatically.</li>
+</ul>
+
+<h2>Step 3 · Try three requests</h2>
+<div class="card">
+<pre>Read examples/si_bulk.vasp and report its space group and inequivalent sites.</pre>
+<pre>From examples/pt_bulk.vasp cut a Pt(111) slab with 4 atomic layers and 15 Å vacuum,
+fix the bottom two layers, save it as pt111_4l.vasp and render it.</pre>
+<pre>Using pt111_4l.vasp, expand to a 3×3 surface cell, list the adsorption sites,
+put CO (C end down, 2.0 Å) on the fcc hollow, keep 15 Å vacuum, check the geometry and render it.</pre>
+</div>
+<p>Say what you want (orientation, layers, vacuum, site, thresholds); no tool names are needed. The agent reads, builds, validates and renders, and ends with a summary of the files and the key numbers.</p>
+
+<h2>What MASON can build</h2>
+<ul>
+<li>Reading and analysis: format conversion, space group and inequivalent sites, geometry validation, rendering</li>
+<li>Bulk and molecules: supercells, vacancies, substitutions, interstitials, molecules, stacking faults, grain boundaries</li>
+<li>Surfaces and 2D: slabs, bottom capping, frozen layers, vacuum, adsorption sites and adsorbates, passivation, reconstruction, nanoribbons, nanotubes, twisted bilayers</li>
+<li>Interfaces and stacking: lattice-matching candidates with an interactive selection page, interface construction, solvent layers, stacking</li>
+</ul>
+
+<h2>If something goes wrong</h2>
+<ul>
+<li>The model returns 401 or 403: check the API key (and, for providers with two endpoints, that the key belongs to the endpoint chosen); <code>MASON --test</code> shows the exact error, <code>MASON --setup</code> lets you enter them again.</li>
+<li>Port in use: MASON moves to the next free port and prints the address; <code>MASON --port 5000</code> chooses a different preferred port.</li>
+<li>Interface matching of a large system times out: raise <code>mcp.structure.timeout</code> in <code>opencode.json</code>.</li>
+<li>More in <code>docs/README.md</code> of the installation.</li>
+</ul>
+</main></body></html>
