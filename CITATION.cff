@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use MASON, please cite it as below."
+title: "MASON: Materials Atomistic Structure builder Operated in Natural language"
+version: 1.0.2
+date-released: 2026-09-17
+license: MIT
+repository-code: "https://github.com/zxy-boop/MASON"
+authors:
+  - family-names: Zhang
+    given-names: Xinyue
+    affiliation: "College of Electronic Information and Optical Engineering, Nankai University"
+  - family-names: Li
+    given-names: Jixiang
+    affiliation: "School of Physics, Nankai University"
+  - family-names: Shao
+    given-names: Bin
+    affiliation: "College of Electronic Information and Optical Engineering, Nankai University"
+  - family-names: Yang
+    given-names: Baishun
+    affiliation: "CIC nanoGUNE BRTA"
+  - family-names: Liu
+    given-names: Zhiyang
+    affiliation: "College of Electronic Information and Optical Engineering, Nankai University"
+  - family-names: Wang
+    given-names: Weichao
+    affiliation: "College of Electronic Information and Optical Engineering, Nankai University"
+keywords:
+  - atomistic structure building
+  - first-principles calculations
+  - language-model agents
+  - Model Context Protocol
+  - surfaces and interfaces
+  - defects
